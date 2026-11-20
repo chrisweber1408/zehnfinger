@@ -887,8 +887,8 @@ function updateStats() {
   $('sTime').innerHTML = `${fmtTime(s.ms)}<small>· ${s.errors}</small>`;
 }
 
-const PASS_ACC = 90;
-const starsFor = acc => acc >= 98 ? 3 : acc >= 95 ? 2 : acc >= PASS_ACC ? 1 : 0;
+// Jede abgeschlossene Übung schaltet die nächste Lektion frei; Sterne bewerten nur die Genauigkeit.
+const starsFor = acc => acc >= 98 ? 3 : acc >= 95 ? 2 : acc >= 90 ? 1 : 0;
 const starHtml = n => [0, 1, 2].map(i => `<span class="${i < n ? '' : 'off'}">★</span>`).join('');
 
 function finish() {
@@ -898,24 +898,21 @@ function finish() {
   updateStats();
   const s = computeStats();
   const stars = starsFor(s.acc);
-  const passed = stars > 0;
   const idx = state.idx;
   const prev = progress.best[idx];
-  const isBest = passed && (!prev || s.wpm > prev.wpm);
-  if (passed) {
-    const b = prev || { wpm: 0, apm: 0, acc: 0, stars: 0 };
-    progress.best[idx] = { wpm: Math.max(b.wpm, s.wpm), apm: Math.max(b.apm, s.apm), acc: Math.max(b.acc, s.acc), stars: Math.max(b.stars, stars) };
-    if (idx === progress.unlocked && idx < LESSONS.length - 1) progress.unlocked = idx + 1;
-  }
+  const isBest = !prev || s.wpm > prev.wpm;
+  const b = prev || { wpm: 0, apm: 0, acc: 0, stars: 0 };
+  progress.best[idx] = { wpm: Math.max(b.wpm, s.wpm), apm: Math.max(b.apm, s.apm), acc: Math.max(b.acc, s.acc), stars: Math.max(b.stars, stars) };
+  if (idx === progress.unlocked && idx < LESSONS.length - 1) progress.unlocked = idx + 1;
   store.set('zf.progress', progress);
   renderLessons();
 
   $('resStars').innerHTML = starHtml(stars);
-  $('resTitle').textContent = passed ? (stars === 3 ? 'Hervorragend!' : 'Geschafft!') : 'Fast geschafft';
+  $('resTitle').textContent = stars === 3 ? 'Hervorragend!' : 'Geschafft!';
   const last = idx === LESSONS.length - 1;
-  $('resMsg').textContent = passed
-    ? (last ? 'Du hast den gesamten Kurs abgeschlossen. Übe weiter, um schneller zu werden!' : `Lektion ${idx + 2} ist freigeschaltet.`)
-    : `Für die nächste Lektion brauchst du mindestens ${PASS_ACC} % Genauigkeit. Lass dir Zeit – Genauigkeit kommt vor Tempo.`;
+  let msg = last ? 'Du hast den gesamten Kurs abgeschlossen. Übe weiter, um schneller zu werden!' : `Lektion ${idx + 2} ist freigeschaltet.`;
+  if (s.acc < 90) msg += ' Tipp: Wiederhole die Lektion ruhig noch einmal – Genauigkeit kommt vor Tempo.';
+  $('resMsg').textContent = msg;
   $('resApm').textContent = s.apm;
   $('resWpm').textContent = s.wpm;
   $('resAcc').textContent = s.acc + '%';
@@ -925,9 +922,9 @@ function finish() {
   if (weak.length) extra += ` · Übe: ${weak.join(', ')}`;
   $('resExtra').innerHTML = (isBest ? '<span class="best">Neuer Bestwert! </span>' : '') + escapeHtml(extra);
   const nextBtn = $('resNext');
-  nextBtn.textContent = passed && !last ? 'Nächste Lektion' : 'Neuer Text';
-  nextBtn.dataset.action = passed && !last ? 'next' : 'new';
-  if (passed) { beep(660, 0.12, 'sine', 0.06); beep(880, 0.18, 'sine', 0.06, 0.1); }
+  nextBtn.textContent = !last ? 'Nächste Lektion' : 'Neuer Text';
+  nextBtn.dataset.action = !last ? 'next' : 'new';
+  beep(660, 0.12, 'sine', 0.06); beep(880, 0.18, 'sine', 0.06, 0.1);
   openDialog();
 }
 
