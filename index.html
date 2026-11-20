@@ -102,6 +102,8 @@ button { font: inherit; color: inherit; }
 .side-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--faint); padding: 8px 20px 4px; }
 .training { padding: 0 10px 4px; display: flex; flex-direction: column; gap: 2px; }
 .l-num svg { width: 15px; height: 15px; }
+.l-num.done { background: color-mix(in srgb, var(--ok) 18%, transparent); border-color: color-mix(in srgb, var(--ok) 45%, transparent); color: var(--ok); }
+.lesson-item.active .l-num.done { background: var(--ok); color: #fff; }
 
 /* Streak */
 .streak {
@@ -843,10 +845,11 @@ function normalizeCustom(raw) {
 /* =========================================================
    Zustand
    ========================================================= */
-const progress = store.get('zf.progress', { unlocked: 0, best: {}, current: 0 });
-if (typeof progress.unlocked !== 'number') progress.unlocked = 0;
-if (!progress.best) progress.best = {};
-progress.current = Math.min(progress.current || 0, progress.unlocked);
+// Alle Lektionen sind frei wählbar; gespeichert werden abgeschlossene Lektionen (best) und die zuletzt gewählte.
+const progress = store.get('zf.progress', { best: {}, current: 0 }) || {};
+if (!progress.best || typeof progress.best !== 'object') progress.best = {};
+delete progress.unlocked;   // Altlast aus früheren Versionen
+progress.current = Math.max(0, Math.min(Number(progress.current) || 0, LESSONS.length - 1));
 
 const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
 const settings = Object.assign({ theme: prefersDark ? 'dark' : 'light', sound: true, tint: true, blind: false }, store.get('zf.settings', {}));
@@ -931,7 +934,7 @@ function weakKeys(limit) {
 const chipLabel = c => (isLetter(c) && c !== 'ß' ? c.toUpperCase() : c);
 
 function loadLesson(idx, keepText) {
-  idx = Math.max(0, Math.min(idx, progress.unlocked));
+  idx = Math.max(0, Math.min(idx, LESSONS.length - 1));   // alle Lektionen frei wählbar
   progress.current = idx;
   store.set('zf.progress', progress);
   const lesson = LESSONS[idx];
@@ -1177,9 +1180,11 @@ function finish() {
     isBest = !prev || s.wpm > prev.wpm;
     const b = prev || { wpm: 0, apm: 0, acc: 0, stars: 0 };
     progress.best[idx] = { wpm: Math.max(b.wpm, s.wpm), apm: Math.max(b.apm, s.apm), acc: Math.max(b.acc, s.acc), stars: Math.max(b.stars, stars) };
-    if (idx === progress.unlocked && idx < LESSONS.length - 1) progress.unlocked = idx + 1;
     store.set('zf.progress', progress);
-    msg = last ? 'Du hast den gesamten Kurs abgeschlossen. Übe weiter, um schneller zu werden!' : `Lektion ${idx + 2} ist freigeschaltet.`;
+    const doneCount = Object.keys(progress.best).length;
+    msg = doneCount === LESSONS.length
+      ? 'Du hast alle Lektionen abgeschlossen. Übe weiter, um schneller zu werden!'
+      : `Lektion ${idx + 1} abgeschlossen ✓ (${doneCount} von ${LESSONS.length}).`;
   } else if (state.mode === 'weak') {
     msg = 'Schwächen-Training abgeschlossen. Deine Fehlerstatistik wurde aktualisiert.';
   } else {
@@ -1274,12 +1279,11 @@ function renderLessons() {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'lesson-item' + (state && state.mode === 'lesson' && i === state.idx ? ' active' : '');
-    const locked = i > progress.unlocked;
-    btn.disabled = locked;
     const best = progress.best[i];
     const sub = l.type ? (l.type === 'sentences' ? 'Alles kombiniert' : l.keys) : l.keys.toUpperCase().split('').join(' ');
+    if (best) btn.title = `Abgeschlossen · Bestwert ${best.wpm} WPM, ${best.acc} % Genauigkeit`;
     btn.innerHTML = `
-      <span class="l-num">${locked ? '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>' : i + 1}</span>
+      <span class="l-num${best ? ' done' : ''}">${best ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>' : i + 1}</span>
       <span><div class="l-title">${escapeHtml(l.title)}</div><div class="l-sub">${escapeHtml(sub)}</div></span>
       <span class="l-meta">${best ? `<div class="stars">${starHtml(best.stars)}</div>${best.wpm} WPM` : ''}</span>`;
     btn.addEventListener('click', () => { closeSidebar(); loadLesson(i); focusInput(); });
@@ -1300,7 +1304,7 @@ function renderLessons() {
 
 $('resetBtn').addEventListener('click', () => {
   if (!confirm('Lektionen, Bestwerte und Fehlerstatistik löschen?\n(Übungszeit und Streak bleiben erhalten.)')) return;
-  progress.unlocked = 0; progress.best = {}; progress.current = 0;
+  progress.best = {}; progress.current = 0;
   store.set('zf.progress', progress);
   stats.keyErrors = {};
   saveStats();

@@ -25,7 +25,7 @@ Eine moderne, ablenkungsfreie Web-App zum Erlernen des 10-Finger-Schreibsystems 
 | Fehler korrigieren | `Backspace` |
 | Nächste Lektion (im Ergebnisfenster) | `Enter` |
 
-Jede abgeschlossene Übung schaltet die nächste Lektion frei – unabhängig von der Genauigkeit. Sterne zeigen, wie genau du getippt hast (★ ab 90 %, ★★ ab 95 %, ★★★ ab 98 %).
+Alle Lektionen sind von Anfang an frei wählbar. Abgeschlossene Lektionen erhalten ein ✓ in der Lektionsliste, dazu Bestwert und Sterne für die Genauigkeit (★ ab 90 %, ★★ ab 95 %, ★★★ ab 98 %).
 
 ## Installation & Hosting
 
