@@ -548,6 +548,35 @@ qual quelle quer bequem text taxi hexe axt boxen yoga pony hobby baby typ
 
 const L1_DRILLS = ['asdf', 'jklö', 'fdsa', 'ölkj', 'fj', 'dk', 'sl', 'aö', 'jf', 'kd', 'ls', 'öa', 'ff', 'jj', 'fjfj', 'dkdk', 'slsl', 'aöaö'];
 
+/* Sinnvolle Kurzphrasen (in normaler Schreibweise). Für jede Lektion werden automatisch
+   nur Phrasen gewählt, deren Buchstaben bereits gelernt sind; vor der Großbuchstaben-
+   Lektion werden sie kleingeschrieben. Grob nach Lernstufe sortiert. */
+const PHRASES = `
+lass das|das Fass|das All|falls das|lass das Fass|als das All
+die Idee|das Eis|sie lief|das Seil|die Seife|die See|das Ei|lies das|die Seife fiel|das Ei fiel|das Kleid|sie lief leise|die leise Elfe|das Feld|jede Idee|die Kiesel|alle Kiesel|das Kleid fiel
+die Frau|der Kurs|er rief|die Frau rief|der Lauf|ruf die Frau|das Feuer|die Freude|die Frau las|er las das|die Eule rief|die Reise|die Feier|der Leser|der Adler|die Erde|er lief auf|lies die Reise
+das Haus|der Hase lief|die Hilfe|das Glas|die Frage|er sah das Haus|der Hagel|frage die Frau|der Held|die Uhr|die Ruhe|er fuhr|sie sah das Glas|der Hase sah das Gras|das Glas fiel|geh heraus|sag ja
+es ist Zeit|der Zug ist da|der Tag ist kurz|das ist gut|ist das gut|er sitzt da|sie hat Zeit|das Ziel ist klar|das ist der Test|Zeit ist Geld|heute ist der Tag|das ist jetzt gut|die Stadt ist alt|der Tee ist fertig|hier ist es still|es ist zu kalt|sie trifft das Ziel|der Gast ist da|der Hut sitzt gut
+mein Name ist Anna|nimm dir Zeit|er kann es|immer mit der Ruhe|der Mann ist nett|ein guter Tag|die Minuten laufen|der Hund ist nett|sie nimmt den Zug|das Ende ist nah|nur mit Geduld|sie singt ein Lied|die Mutter singt|der Mann trinkt Tee|sie lernen gern|die Hand ist kalt|ein Tag am Meer|nimm den Hut|dann geht es
+wo ist der Hund|wir lernen gerne|das Wort|wie geht es dir|was ist los|der Wind weht|morgen ist Sonntag|wir wohnen hier|das Wetter ist gut|Oma kommt morgen|wo wohnt ihr|das Tor ist offen|die Sonne ist warm|der Wald ist dunkel|wer kommt mit|wir warten noch|so ein Wetter|die Rose ist rot|der Hof ist leer|oft ist weniger mehr|wir sehen uns morgen
+ich lerne schnell|das ist nicht schwer|ich auch|vor dem Haus|der Vogel singt|ich lese viel|nicht schlecht|das Licht ist an|vier Tage Urlaub|der Vater kocht|der Fisch schwimmt|vor allem Ruhe|ich komme gleich|sicher ist sicher|die Nacht ist kalt|ich trinke Kaffee|noch nicht ganz
+bis bald|das Buch ist neu|ich bleibe hier|das Brot ist frisch|aber gerne|ich habe Zeit|der Bus kommt|bald ist Abend|das Bild ist schief|ich bin bereit|eine gute Frage|der Baum ist hoch|wir haben Hunger|Besuch kommt heute|der Ball rollt|bitte lies das Buch
+der Park ist schön|die Post kommt|das Spiel beginnt|ich spiele gern|der Plan ist gut|eine kurze Pause|das Papier liegt hier|die Suppe ist warm|pack die Tasche|der Apfel ist rot|die Pizza ist lecker|das Problem ist gelöst|probier es mal|ein Platz am Fenster
+das Taxi kommt|der Text ist lang|Yoga am Morgen|mein Hobby ist Lesen|das Sofa ist bequem|quer durch die Stadt|die Hexe lacht|Max boxt gern|ein Pony im Stall|die Quelle ist klar|extra viel Zeit
+viel Spaß|schöne Grüße|über die Straße|ich bin müde|das Gemüse ist frisch|gute Nacht und süße Träume|der Tee ist heiß|die Tür ist offen|für dich|das Mädchen lacht|der Bär schläft|die Katze schläft|das Baby schläft|lieber spät als nie|Sport macht Spaß|ein großer Fuß|grün ist die Hoffnung|Übung macht den Meister|die Brücke ist lang|ich hätte gern Käse|zwölf Äpfel im Korb
+`.trim().split(/[|\n]/).map(s => s.trim()).filter(Boolean);
+
+const PLURALS = ['Äpfel', 'Tage', 'Kinder', 'Euro', 'Minuten', 'Seiten', 'Stunden', 'Bücher', 'Freunde', 'Katzen', 'Stühle', 'Meter', 'Kilo', 'Gäste'];
+const MONTHS = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+
+const PUNCT_SENTENCES = [
+  'Wie geht es dir?', 'Danke, gut!', 'Achtung: Stufe!', 'Komm schnell!', 'Ist das wahr?', 'Ja, klar.',
+  'Er sagte: "Hallo!"', 'Erst denken; dann tippen.', 'Sie fragte: "Kommst du mit?"', 'Wo ist mein Schlüssel?',
+  'Super, das klappt!', 'Bitte nicht stören!', 'Hinweis: Tür schließen.', 'Das E-Mail-Postfach ist voll.',
+  'Wer? Wie? Was?', 'Halt! Stopp!', 'Kaffee oder Tee?', 'Montag bis Freitag: geöffnet.',
+  'Vorsicht; der Boden ist nass.', 'Na, wie war der Urlaub?', 'Das ist ein "echter" Klassiker.', 'Nord-Süd-Verbindung gesperrt!'
+];
+
 const SENTENCES = [
   'Übung macht den Meister.',
   'Wer schreibt, der bleibt.',
@@ -672,11 +701,16 @@ function genLetterLesson(idx) {
   const newK = [...lesson.keys].filter(isLetter);
   const words = WORDS.filter(w => [...w].every(c => allowed.has(c)));
   const withNew = words.filter(w => [...w].some(c => newK.includes(c)));
-  const commaRate = cum.includes(',') ? (lesson.keys.includes(',') ? 0.3 : 0.1) : 0;
-  const dotRate = cum.includes('.') ? (lesson.keys.includes('.') ? 0.3 : 0.08) : 0;
+  // Sinnvolle Wortgruppen, die nur gelernte Buchstaben enthalten (vor Lektion 13 kleingeschrieben)
+  const phrases = PHRASES.map(p => p.toLowerCase()).filter(p => [...p].every(c => c === ' ' || allowed.has(c)));
+  const phrasesNew = phrases.filter(p => [...p].some(c => newK.includes(c)));
+  const commaRate = cum.includes(',') ? (lesson.keys.includes(',') ? 0.35 : 0.15) : 0;
+  const dotRate = cum.includes('.') ? (lesson.keys.includes('.') ? 0.35 : 0.15) : 0;
+  // Reine Griffübungen nur, wenn es (fast) noch keine echten Wörter gibt
+  const drillRate = phrases.length + words.length < 25 ? 0.2 : 0;
 
   const drill = () => {
-    if (idx === 0 && Math.random() < 0.5) return pick(L1_DRILLS);
+    if (idx === 0 && Math.random() < 0.6) return pick(L1_DRILLS);
     const n = 3 + rand(3);
     let s = '';
     for (let i = 0; i < n; i++) s += (newK.length && Math.random() < 0.5) ? pick(newK) : pick(allowedArr);
@@ -685,46 +719,48 @@ function genLetterLesson(idx) {
   return buildTokens(idx === 0 ? 110 : 150, () => {
     const r = Math.random();
     let t;
-    if (withNew.length >= 3 && r < 0.5) t = pick(withNew);
-    else if (words.length >= 10 && r < 0.82) t = pick(words);
+    if (r < drillRate) t = drill();
+    else if (phrases.length && r < (phrases.length >= 12 ? 0.88 : 0.72)) t = phrasesNew.length && Math.random() < 0.6 ? pick(phrasesNew) : pick(phrases);
+    else if (words.length) t = withNew.length && Math.random() < 0.6 ? pick(withNew) : pick(words);
     else t = drill();
     const p = Math.random();
     if (p < commaRate) t += ',';
-    else if (p < commaRate + dotRate) t += '.';
+    else if (p < commaRate + dotRate && !isQuestion(t)) t += '.';
     return t;
   });
 }
 
+// Fragen erkennen, damit sie ein Fragezeichen statt eines Punkts bekommen
+const isQuestion = p => /^(wie|was|wo|wer|woher|wann|ist)\s/i.test(p);
+const sentence = p => cap(p) + (isQuestion(p) ? '?' : '.');
+
+// Großbuchstaben: Wortgruppen in normaler Schreibweise, als kurze Sätze
 function genCaps() {
-  return buildTokens(160, () => Math.random() < 0.65 ? cap(pick(WORDS)) : pick(WORDS));
+  return buildTokens(170, () => sentence(pick(PHRASES)));
 }
 
+// Zahlen in sinnvollem Zusammenhang
+function numPhrase() {
+  switch (rand(9)) {
+    case 0: return `um ${1 + rand(12)} Uhr`;
+    case 1: return `im Jahr ${1950 + rand(77)}`;
+    case 2: case 3: return `${2 + rand(98)} ${pick(PLURALS)}`;
+    case 4: return `Seite ${1 + rand(300)}`;
+    case 5: return `Zimmer ${100 + rand(400)}`;
+    case 6: return `am ${1 + rand(28)}. ${pick(MONTHS)}`;
+    case 7: return `Bus ${1 + rand(99)}`;
+    default: return `${1 + rand(9)} von 10`;
+  }
+}
 function genNumbers() {
-  const num = () => {
-    const r = rand(6);
-    if (r === 0) return String(rand(10));
-    if (r === 1) return String(10 + rand(90));
-    if (r === 2) return String(100 + rand(900));
-    if (r === 3) return String(1950 + rand(80));
-    if (r === 4) return pick(['123', '456', '789', '1234', '5678', '90', '2468', '1357']);
-    return String(rand(10)) + String(rand(10)) + String(rand(10));
-  };
-  return buildTokens(150, () => Math.random() < 0.55 ? num() : (Math.random() < 0.3 ? cap(pick(WORDS)) : pick(WORDS)));
+  return buildTokens(150, () => Math.random() < 0.75 ? cap(numPhrase()) + '.' : sentence(pick(PHRASES)));
 }
 
 function genPunct() {
   return buildTokens(160, () => {
-    const w = Math.random() < 0.3 ? cap(pick(WORDS)) : pick(WORDS);
-    switch (rand(8)) {
-      case 0: return w + ',';
-      case 1: return w + '.';
-      case 2: return w + '!';
-      case 3: return w + '?';
-      case 4: return w + ':';
-      case 5: return w + ';';
-      case 6: return '"' + w + '"';
-      default: return w + '-' + pick(WORDS);
-    }
+    if (Math.random() < 0.7) return pick(PUNCT_SENTENCES);
+    const p = pick(PHRASES);
+    return isQuestion(p) ? sentence(p) : cap(p) + pick(['.', '!']);
   });
 }
 
@@ -760,11 +796,19 @@ function genWeakText(keys) {
   const others = chars.filter(c => !isLetter(c.toLowerCase()) && !/[0-9]/.test(c));
   const words = letters.length ? WORDS.filter(w => [...w].some(c => letters.includes(c))) : [];
   const filler = [...'asdfjklö'];
+  // Sinnvolle Sätze/Wortgruppen, die möglichst viele Fehlertasten enthalten
+  const score = s => [...s].filter(c => chars.includes(c)).length / s.length;
+  const candidates = [...new Set([...PHRASES.map(sentence), ...PUNCT_SENTENCES, ...SENTENCES])]
+    .filter(s => chars.some(c => s.includes(c)))
+    .sort((a, b) => score(b) - score(a))
+    .slice(0, 40);
   const text = buildTokens(160, () => {
     const r = Math.random();
     let t = '';
-    if (words.length && r < 0.55) t = pick(words);
-    else if (digits.length && r < 0.75) { const n = 2 + rand(3); for (let i = 0; i < n; i++) t += pick(digits); }
+    if (candidates.length && r < 0.65) return pick(candidates);
+    if (digits.length && r < 0.75) return numPhrase().replace(/\d+/, m => m.replace(/\d/g, () => pick(digits)));
+    if (words.length && r < 0.92) t = pick(words);
+    else if (digits.length) { const n = 2 + rand(3); for (let i = 0; i < n; i++) t += pick(digits); }
     else if (letters.length) { const n = 3 + rand(3); for (let i = 0; i < n; i++) t += Math.random() < 0.6 ? pick(letters) : pick(filler); }
     else t = pick(WORDS);
     if (isLetter(t[0]) && ((capSet.has(t[0]) && Math.random() < 0.8) || (capSet.size && Math.random() < 0.2))) t = cap(t);
