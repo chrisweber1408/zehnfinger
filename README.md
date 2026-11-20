@@ -10,8 +10,12 @@ Eine moderne, ablenkungsfreie Web-App zum Erlernen des 10-Finger-Schreibsystems 
 - **Visuelle QWERTZ-Tastatur** – die nächste Taste wird hervorgehoben, Farbcodierung und Hand-Grafik zeigen den richtigen Finger (inkl. Hinweis auf die gegenüberliegende Umschalttaste)
 - **Live-Feedback** – richtige Zeichen grün, Fehler rot, optional mit Ton; Fehler blockieren nicht und lassen sich mit Backspace korrigieren
 - **Auswertung in Echtzeit** – Anschläge pro Minute (APM), Wörter pro Minute (WPM), Genauigkeit, Zeit und Fehlerzahl; nach jeder Übung mit Sternebewertung und Problemtasten
-- **Lernfortschritt** – freigeschaltete Lektionen und Bestwerte werden lokal im `localStorage` gespeichert
-- **Dark Mode**, responsives Layout und Unterstützung für Bildschirmtastaturen
+- **Schwächen trainieren** – die App merkt sich dauerhaft, bei welchen Tasten du die meisten Fehler machst, und erzeugt daraus gezielte Übungstexte
+- **Eigener Text** – beliebigen Text einfügen und abtippen; typografische Anführungszeichen und Striche werden automatisch angepasst
+- **Blind-Modus** – blendet die Tastenbeschriftung aus, Fingerfarben und Hervorhebung bleiben als Hilfe
+- **Tagesziel & Streak** – 🔥 zeigt, an wie vielen Tagen in Folge du mindestens 3 Minuten geübt hast
+- **Lernfortschritt** – Lektionen, Bestwerte, Fehlerstatistik und Übungszeit werden lokal im `localStorage` gespeichert und lassen sich als JSON-Datei exportieren und importieren
+- **Dark Mode**, responsives Layout (alles ohne Scrollen auf einem Bildschirm) und Unterstützung für Bildschirmtastaturen
 
 ## Bedienung
 
